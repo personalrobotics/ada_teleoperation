@@ -1,6 +1,7 @@
 import numpy as np
-import threading
+from threading import Lock
 import time
+import rospy
 
 from abc import ABCMeta, abstractmethod
 
@@ -9,36 +10,54 @@ class UserInputListener(object):
   __metaclass__ = ABCMeta
 
   def __init__(self):
-    self.inputlock = threading.Lock()
+    self.inputlock = Lock()
     self.init_listener()
-    self.last_message = None
+    self.most_recent_message = None
+
+    #keep track of the last state of buttons we returned
+    #in order to keep track of when button states change
+    self.last_buttons_returned = None
 
   def callback(self, data):
     with self.inputlock:
-      self.last_message = data
+      self.most_recent_message = data
       
-  @abstractmethod
   def init_listener(self):
-    raise NotImplementedError("Must override init_listener")
+    rospy.Subscriber(self.input_topic_name, self.input_message_type, self.callback)
 
-  def get_last_cmd(self):
-    while not self.last_message:
+  #TODO handle case of no most_recent_message without infinite loop
+  def get_most_recent_cmd(self):
+    while self.most_recent_message is None:
+      print 'Error: No user input to return'
       time.sleep(0)
 
     with self.inputlock:
-      return self.message_to_data(self.last_message)
+      data = self.message_to_data(self.most_recent_message)
+
+    #set the change between the last buttons returned as data
+    #and the currently pressed buttons
+    if self.last_buttons_returned is None:
+      data.button_changes = np.zeros(len(data.buttons))
+    else:
+      data.button_changes = data.buttons - self.last_buttons_returned
+    self.last_buttons_returned = data.buttons
+
+    return data
 
   @abstractmethod
   def message_to_data(self, message):
     raise NotImplementedError("Must override message_to_data")
 
 
+#axes and buttons should have a consistent order for different inputs
+#axes should be forward-backward, then left-right.
+#first button should correspond to switching modes
+#second button (if applicable) should correspond to toggling assistance
 class UserInputData(object):
-  def __init__(self, move_velocity=np.zeros(3), close_hand_velocity=0., mode_switch_button=False, assist_switch_button=False):
-    self.move_velocity = move_velocity
-    self.close_hand_velocity = close_hand_velocity
-    self.mode_switch_button = mode_switch_button
-    self.assist_switch_button = assist_switch_button
+  def __init__(self, axes=list(), buttons=list(), button_changes=list()):
+    self.axes = axes
+    self.buttons = buttons
+    self.button_changes = button_changes
 
-
-
+  def __str__(self):
+    return 'axes: ' + str(self.axes) + '  buttons: ' + str(self.buttons)
