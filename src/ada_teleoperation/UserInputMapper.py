@@ -27,10 +27,10 @@ class UserInputMapper(object):
     curr_robot_mode = robot_state.mode
     if self.num_motion_modes == 2:
       if curr_robot_mode == 0:
-        action_to_ret.twist[:3] = user_input_data.axes * translation_weightings
+        action_to_ret.twist[:3] = user_input_data.axes[0:3] * translation_weightings
       else:
         ee_rot = robot_state.ee_trans[0:3,0:3]
-        action_to_ret.twist[3:] = np.dot(ee_rot, (user_input_data.axes * angular_weightings))
+        action_to_ret.twist[3:] = np.dot(ee_rot, (user_input_data.axes[0:3] * angular_weightings))
 
     elif self.num_motion_modes == 3:
       if curr_robot_mode == 0:

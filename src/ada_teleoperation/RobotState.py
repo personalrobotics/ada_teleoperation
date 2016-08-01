@@ -29,6 +29,12 @@ class RobotState(object):
     assert mode >= 0 and mode <= self.num_modes
     self.mode = mode
 
+  def mode_after_action(self, action):
+    if action.is_no_mode_switch():
+      return self.mode
+    else:
+      return action.switch_mode_to
+
   def state_after_action(self, action, time):
     state_copy = copy.deepcopy(self)
     if not action.is_no_move():

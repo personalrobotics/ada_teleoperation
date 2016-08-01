@@ -20,9 +20,9 @@ class HydraListener(UserInputListener):
     right_trigger = message.paddles[right_ind].trigger
     #left_trigger = message.paddles[left_ind].trigger
 
-    axes = np.array([right_joy[0], right_joy[1], left_joy[0], left_joy[1], right_trigger])
+    axes = np.array([right_joy[1], right_joy[0], left_joy[1], left_joy[0], right_trigger])
 
-    buttons = np.array([message.paddles[right_ind].buttons[1], message.paddles[right_ind].buttons[2]])
+    buttons = np.array([message.paddles[right_ind].buttons[1], message.paddles[right_ind].buttons[2]], dtype=int)
     #mode_switch_button = message.paddles[right_ind].buttons[1]
     #assist_switch_button = message.paddles[right_ind].buttons[2]
 
