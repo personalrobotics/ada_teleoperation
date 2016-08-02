@@ -7,6 +7,10 @@ from RobotState import *
 
 translation_weightings = np.array([0.3, 0.3, 0.3])
 angular_weightings = np.array([0.9, 0.9, 0.9])
+finger_weighting = -0.2
+
+#TODO make this dynamic
+NUM_FINGER_DOFS = rospy.get_param('/ada/num_finger_dofs', 2)
 
 #mapping from user input to action
 #if we were to execute input via direct teleop
@@ -25,25 +29,49 @@ class UserInputMapper(object):
     #distinguish between 2d and 3d control modes
 
     curr_robot_mode = robot_state.mode
-    if self.num_motion_modes == 2:
-      if curr_robot_mode == 0:
-        action_to_ret.twist[:3] = user_input_data.axes[0:3] * translation_weightings
-      else:
-        ee_rot = robot_state.ee_trans[0:3,0:3]
-        action_to_ret.twist[3:] = np.dot(ee_rot, (user_input_data.axes[0:3] * angular_weightings))
+    #if we are in the first few modes, it is a end effector velocity command
+    if curr_robot_mode < self.num_motion_modes:
+      if self.num_motion_modes == 2:
+        if curr_robot_mode == 0:
+          action_to_ret.twist[:3] = translation_input_conversion(user_input_data.axes[0:3], robot_state)
+        else:
+          action_to_ret.twist[3:] = rotation_input_conversion(user_input_data.axes[0:3], robot_state)
 
-    elif self.num_motion_modes == 3:
-      if curr_robot_mode == 0:
-        action_to_ret.twist[:2] = user_input_data.axes[:2] * translation_weightings[:2]
-        #action_to_ret.move[0] *= -1.
-      elif curr_robot_mode == 1:
-        action_to_ret.twist[2] = user_input_data.axes[1] * translation_weightings[2]
-        ee_rot = robot_state.ee_trans[0:3,0:3]
-        rot_velocity = np.array([0, 0, user_input_data.axes[0]])
-        action_to_ret.twist[3:] = np.dot(ee_rot, rot_velocity * angular_weightings)
+      elif self.num_motion_modes == 3:
+        if curr_robot_mode == 0:
+          action_to_ret.twist[:3] = translation_input_conversion(np.append(user_input_data.axes[0:2], 0.), robot_state)
+          #action_to_ret.move[0] *= -1.
+        elif curr_robot_mode == 1:
+          action_to_ret.twist[:3] = translation_input_conversion(np.append(np.zeros(2), -user_input_data.axes[0]), robot_state)
+          rot_velocity = np.array([0, 0, user_input_data.axes[1]])
+          action_to_ret.twist[3:] = rotation_input_conversion(rot_velocity, robot_state)
+        else:
+          rot_velocity = np.array([-user_input_data.axes[1], user_input_data.axes[0], 0.])
+          action_to_ret.twist[3:] = rotation_input_conversion(rot_velocity, robot_state)
+    else:
+      #both left-right and up-down control fingers. With kinova control, whichever input has higher
+      #magnitude overrides the other
+      axis_input_higher_mag = np.argmax(np.abs(user_input_data.axes[0:2]))
+      if robot_state.num_finger_dofs == 3 and axis_input_higher_mag == 0:
+        #if this is the jaco, and the user went up-down, only control two fingers
+        action_to_ret.finger_vel[0:2] = finger_weighting * user_input_data.axes[axis_input_higher_mag]
       else:
-        ee_rot = robot_state.ee_trans[0:3,0:3]
-        rot_velocity = np.array([user_input_data.axes[1], user_input_data.axes[0], 0.])
-        action_to_ret.twist[3:] = np.dot(ee_rot, (rot_velocity * angular_weightings))
+        action_to_ret.finger_vel[:] = finger_weighting * user_input_data.axes[axis_input_higher_mag]
+
+
 
     return action_to_ret
+
+
+
+#rotates the translation inputs to the correct world frame, applies weighting
+def translation_input_conversion(inputs, robot_state):
+  inputs_rotated = np.array([-inputs[1], -inputs[0], inputs[2]])
+  return inputs_rotated * translation_weightings
+
+
+#puts the rotation input into the world frame, applies weighting
+def rotation_input_conversion(inputs, robot_state):
+  ee_rot = robot_state.ee_trans[0:3,0:3]
+  return np.dot(ee_rot, inputs * angular_weightings)
+

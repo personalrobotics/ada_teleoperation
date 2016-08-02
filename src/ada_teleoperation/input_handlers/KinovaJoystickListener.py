@@ -12,7 +12,7 @@ class KinovaJoystickListener(UserInputListener):
     super(KinovaJoystickListener, self).__init__()
 
   def message_to_data(self, message):
-    axes = np.array([-message.axes[0], message.axes[1], message.axes[2]])
+    axes = np.array([message.axes[1], -message.axes[0], -message.axes[2]])
     #move_velocity = np.array([-message.axes[0], message.axes[1], 0])
     #mode_switch_button = message.buttons[0]
     #close_hand_velocity = message.buttons[1]

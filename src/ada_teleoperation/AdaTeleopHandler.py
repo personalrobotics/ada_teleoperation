@@ -27,14 +27,15 @@ class AdaTeleopHandler:
       self.robot = robot
 
       self.sim = robot.simulated
-      self.manip = self.robot.arm
+      self.manip = robot.arm
+      self.hand = robot.arm.hand
   
 
       #select which input device we will be using
-      self.joystick_listener = HydraListener()
-      #self.joystick_listener = KinovaJoystickListener()
+      #self.joystick_listener = HydraListener()
+      self.joystick_listener = KinovaJoystickListener()
       #self.joystick_listener = MouseJoystickListener()
-      self.user_input_mapper = UserInputMapper(num_motion_modes=2, num_finger_modes=0)
+      self.user_input_mapper = UserInputMapper(num_motion_modes=3, num_finger_modes=1)
 
       self.Init_Robot()
 
@@ -44,7 +45,7 @@ class AdaTeleopHandler:
       self.SwitchToVelocityController()
 
     #set the robot state we keep track of
-    self.robot_state = RobotState(self.GetEndEffectorTransform(), num_modes=self.user_input_mapper.num_motion_modes + self.user_input_mapper.num_finger_modes)
+    self.robot_state = RobotState(self.GetEndEffectorTransform(), self.hand.GetDOFValues(), num_modes=self.user_input_mapper.num_motion_modes + self.user_input_mapper.num_finger_modes)
 
   def GetEndEffectorTransform(self):
     return self.manip.GetEndEffectorTransform()
@@ -54,11 +55,12 @@ class AdaTeleopHandler:
     self.robot_state.mode = self.robot_state.mode_after_action(action)
     #self.robot_state = self.robot_state.state_after_action(action)
     self.execute_twist(action.twist)
+    self.execute_finger_velocities(action.finger_vel)
 
 
   # NOTE: twist is stacked [cartesian angular]
   def execute_twist(self, twist):
-      jointVels, twist_opt = prpy.util.ComputeJointVelocityFromTwist(self.robot, twist, objective=prpy.util.quadraticPlusJointLimitObjective)
+      jointVels, twist_opt = prpy.util.ComputeJointVelocityFromTwist(self.robot, twist)# objective=prpy.util.quadraticPlusJointLimitObjective)
       return self.execute_joint_velocities(jointVels)
 
 
@@ -76,7 +78,7 @@ class AdaTeleopHandler:
 
 
   def execute_finger_velocities(self, finger_velocities):
-    print 'TODO implement finger velocities'
+    self.hand.Servo(finger_velocities)
 
 
   def ExecuteDirectTeleop(self):
