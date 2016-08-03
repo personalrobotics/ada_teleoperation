@@ -22,7 +22,7 @@ possible_teleop_interface_names = [mouse_interface_name, kinova_joy_interface_na
 
 
 class AdaTeleopHandler:
-  def __init__(self, env, robot, teleop_interface):
+  def __init__(self, env, robot, teleop_interface, num_input_dofs):
 #      self.params = {'rand_start_radius':0.04,
 #             'noise_pwr': 0.3,  # magnitude of noise
 #             'vel_scale': 4.,   # scaling when sending velocity commands to robot
@@ -34,7 +34,14 @@ class AdaTeleopHandler:
       self.sim = robot.simulated
       self.manip = robot.arm
       self.hand = robot.arm.hand
-  
+
+      #number of different modes used for motion is related to how many dofs of input we have
+      if num_input_dofs == 2:
+        self.num_motion_modes = 3
+      elif num_input_dofs == 3:
+        self.num_motion_modes = 2
+      else:
+        raise Exception('Number of input dofs being used must be 2 or 3')
 
       #select which input device we will be using
       if teleop_interface == mouse_interface_name:
@@ -45,9 +52,8 @@ class AdaTeleopHandler:
         self.joystick_listener = HydraListener()
       else:
         raise Exception('Teleop interface not specified. Please specify one of: ' + str(possible_teleop_interface_names))
-
         
-      self.user_input_mapper = UserInputMapper(interface_listener=self.joystick_listener, num_motion_modes=3, num_finger_modes=1)
+      self.user_input_mapper = UserInputMapper(interface_listener=self.joystick_listener, num_motion_modes=self.num_motion_modes, num_finger_modes=1)
 
       self.Init_Robot()
 

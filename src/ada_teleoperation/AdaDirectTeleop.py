@@ -68,12 +68,16 @@ if __name__ == "__main__":
     parser.add_argument('--debug', action='store_true',
                         help='enable debug logging')
     parser.add_argument('-input', '--input-interface-name', help='name of the input interface. Possible choices: ' + str(possible_teleop_interface_names), type=str)
+    parser.add_argument('-joy_dofs', '--num-input-dofs', help='number of dofs of input, either 2 or 3', type=int, default=2)
     args = parser.parse_args()
 
     rospy.init_node('ada_teleoperation', anonymous = True)
 
+    print args
+    time.sleep(2)
+
     env,robot = Initialize_Adapy(args)
     Reset_Robot(robot)
-    ada_teleop = AdaTeleopHandler(env, robot, args.input_interface_name)
+    ada_teleop = AdaTeleopHandler(env, robot, args.input_interface_name, args.num_input_dofs)
     ada_teleop.ExecuteDirectTeleop()
 
