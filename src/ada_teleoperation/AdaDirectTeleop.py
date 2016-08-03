@@ -55,6 +55,11 @@ def Reset_Robot(robot):
     robot.arm.PlanToNamedConfiguration('home', execute=True)
 
 
+def Teleop_Done(env, robot):
+  return max(robot.arm.hand.GetDOFValues()) > 0.6
+
+
+
 if __name__ == "__main__":
     #parser.add_argument('-num', '--mouse-num', help='mouse number given by X in /dev/input/mouseX', type=str)
     parser = argparse.ArgumentParser(description="Direct Teleoperation for Ada")
@@ -73,11 +78,8 @@ if __name__ == "__main__":
 
     rospy.init_node('ada_teleoperation', anonymous = True)
 
-    print args
-    time.sleep(2)
-
     env,robot = Initialize_Adapy(args)
     Reset_Robot(robot)
-    ada_teleop = AdaTeleopHandler(env, robot, args.input_interface_name, args.num_input_dofs)
+    ada_teleop = AdaTeleopHandler(env, robot, args.input_interface_name, args.num_input_dofs, is_done_func=Teleop_Done)
     ada_teleop.ExecuteDirectTeleop()
 

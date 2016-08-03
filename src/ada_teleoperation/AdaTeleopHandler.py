@@ -22,7 +22,7 @@ possible_teleop_interface_names = [mouse_interface_name, kinova_joy_interface_na
 
 
 class AdaTeleopHandler:
-  def __init__(self, env, robot, teleop_interface, num_input_dofs):
+  def __init__(self, env, robot, teleop_interface, num_input_dofs, is_done_func=None):
 #      self.params = {'rand_start_radius':0.04,
 #             'noise_pwr': 0.3,  # magnitude of noise
 #             'vel_scale': 4.,   # scaling when sending velocity commands to robot
@@ -34,6 +34,11 @@ class AdaTeleopHandler:
       self.sim = robot.simulated
       self.manip = robot.arm
       self.hand = robot.arm.hand
+
+      if is_done_func is None:
+        self.is_done_func = Is_Done_Func_Default
+      else:
+        self.is_done_func = is_done_func
 
       #number of different modes used for motion is related to how many dofs of input we have
       if num_input_dofs == 2:
@@ -104,7 +109,7 @@ class AdaTeleopHandler:
   
     time_per_iter = 1./CONTROL_HZ
 
-    while True:
+    while not self.is_done_func(self.env, self.robot):
       start_time = time.time()
       robot_state.ee_trans = self.GetEndEffectorTransform()
       ee_trans = robot_state.ee_trans
@@ -121,3 +126,5 @@ class AdaTeleopHandler:
 
 
 
+def Is_Done_Func_Default(env, robot):
+  return False
