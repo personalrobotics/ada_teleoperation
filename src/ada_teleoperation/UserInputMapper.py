@@ -8,10 +8,6 @@ from input_handlers import KinovaJoystickListener, HydraListener, MouseJoystickL
 
 finger_weighting = 0.2
 
-
-#TODO make this dynamic
-NUM_FINGER_DOFS = rospy.get_param('/ada/num_finger_dofs', 2)
-
 #mapping from user input to action
 #if we were to execute input via direct teleop
 class UserInputMapper(object):

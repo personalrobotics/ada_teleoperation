@@ -23,7 +23,6 @@ class KinovaJoystickListener(UserInputListener):
 
   #rotates the translation inputs to the correct world frame, applies weighting
   def translation_input_conversion(self, inputs, robot_state):
-    #inputs_rotated = [inputs[0], i
     return inputs * translation_weightings
 
 

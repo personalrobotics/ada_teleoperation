@@ -12,7 +12,7 @@ import openravepy
 import adapy
 import prpy
 
-CONTROL_HZ = 40.
+CONTROL_HZ = 50.
 
 mouse_interface_name = 'mouse'
 kinova_joy_interface_name = 'kinova'
@@ -34,6 +34,9 @@ class AdaTeleopHandler:
       self.sim = robot.simulated
       self.manip = robot.arm
       self.hand = robot.arm.hand
+
+      num_finger_dofs = len(self.hand.GetIndices())
+      Action.set_no_finger_vel(num_finger_dofs)
 
       if is_done_func is None:
         self.is_done_func = Is_Done_Func_Default
@@ -109,16 +112,21 @@ class AdaTeleopHandler:
   
     time_per_iter = 1./CONTROL_HZ
 
+    #from ada_assistance_policy.AssistancePolicyVisualizationTools import *
+    #vis = VisualizationHandler()
+
     while not self.is_done_func(self.env, self.robot):
       start_time = time.time()
       robot_state.ee_trans = self.GetEndEffectorTransform()
-      ee_trans = robot_state.ee_trans
-      robot_dof_values = self.robot.GetDOFValues()
+      robot_state.finger_dofs = self.manip.hand.GetDOFValues()
+      #ee_trans = robot_state.ee_trans
       
       user_input_raw = self.joystick_listener.get_most_recent_cmd()
       direct_teleop_action = self.user_input_mapper.input_to_action(user_input_raw, robot_state)
 
       self.ExecuteAction(direct_teleop_action)
+
+      #vis.draw_hand_poses([robot_state.ee_trans], marker_ns='ee_axis')
 
       end_time=time.time()
       

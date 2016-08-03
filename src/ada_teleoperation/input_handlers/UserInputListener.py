@@ -6,8 +6,8 @@ import rospy
 from abc import ABCMeta, abstractmethod
 
 
-translation_weightings = np.array([0.3, 0.3, 0.3])
-angular_weightings = np.array([0.9, 0.9, 0.9])
+translation_weightings = np.array([0.2, 0.2, 0.2])
+angular_weightings = np.array([0.4, 0.4, 0.4])
 
 
 class UserInputListener(object):
