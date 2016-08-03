@@ -6,6 +6,10 @@ import rospy
 from abc import ABCMeta, abstractmethod
 
 
+translation_weightings = np.array([0.3, 0.3, 0.3])
+angular_weightings = np.array([0.9, 0.9, 0.9])
+
+
 class UserInputListener(object):
   __metaclass__ = ABCMeta
 
@@ -49,8 +53,19 @@ class UserInputListener(object):
     raise NotImplementedError("Must override message_to_data")
 
 
+#rotates the translation inputs to the correct world frame, applies weighting
+def translation_input_conversion(inputs, robot_state):
+  return inputs *translation_weightings
+
+
+#puts the rotation input into the world frame, applies weighting
+def rotation_input_conversion(inputs, robot_state):
+  ee_rot = robot_state.ee_trans[0:3,0:3]
+  return np.dot(ee_rot, inputs * angular_weightings)
+
+
+
 #axes and buttons should have a consistent order for different inputs
-#axes should be forward-backward, then left-right.
 #first button should correspond to switching modes
 #second button (if applicable) should correspond to toggling assistance
 class UserInputData(object):

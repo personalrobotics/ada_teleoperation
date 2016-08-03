@@ -12,7 +12,7 @@ class KinovaJoystickListener(UserInputListener):
     super(KinovaJoystickListener, self).__init__()
 
   def message_to_data(self, message):
-    axes = np.array([message.axes[1], -message.axes[0], -message.axes[2]])
+    axes = np.array([message.axes[0], -message.axes[1], -message.axes[2]])
     #move_velocity = np.array([-message.axes[0], message.axes[1], 0])
     #mode_switch_button = message.buttons[0]
     #close_hand_velocity = message.buttons[1]
@@ -20,3 +20,15 @@ class KinovaJoystickListener(UserInputListener):
 
     return UserInputData(axes, np.array(message.buttons))
 
+
+  #rotates the translation inputs to the correct world frame, applies weighting
+  def translation_input_conversion(self, inputs, robot_state):
+    #inputs_rotated = [inputs[0], i
+    return inputs * translation_weightings
+
+
+  #puts the rotation input into the world frame, applies weighting
+  def rotation_input_conversion(self, inputs, robot_state):
+    inputs_rotated = [-inputs[1], -inputs[0], inputs[2]]
+    ee_rot = robot_state.ee_trans[0:3,0:3]
+    return np.dot(ee_rot, inputs_rotated * angular_weightings)

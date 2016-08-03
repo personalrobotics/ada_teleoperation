@@ -14,10 +14,15 @@ import prpy
 
 CONTROL_HZ = 40.
 
+mouse_interface_name = 'mouse'
+kinova_joy_interface_name = 'kinova'
+hydra_interface_name = 'hydra'
+
+possible_teleop_interface_names = [mouse_interface_name, kinova_joy_interface_name, hydra_interface_name]
 
 
 class AdaTeleopHandler:
-  def __init__(self, env, robot):
+  def __init__(self, env, robot, teleop_interface):
 #      self.params = {'rand_start_radius':0.04,
 #             'noise_pwr': 0.3,  # magnitude of noise
 #             'vel_scale': 4.,   # scaling when sending velocity commands to robot
@@ -32,10 +37,17 @@ class AdaTeleopHandler:
   
 
       #select which input device we will be using
-      #self.joystick_listener = HydraListener()
-      self.joystick_listener = KinovaJoystickListener()
-      #self.joystick_listener = MouseJoystickListener()
-      self.user_input_mapper = UserInputMapper(num_motion_modes=3, num_finger_modes=1)
+      if teleop_interface == mouse_interface_name:
+        self.joystick_listener = MouseJoystickListener()
+      elif teleop_interface == kinova_joy_interface_name:
+        self.joystick_listener = KinovaJoystickListener()
+      elif teleop_interface == hydra_interface_name:
+        self.joystick_listener = HydraListener()
+      else:
+        raise Exception('Teleop interface not specified. Please specify one of: ' + str(possible_teleop_interface_names))
+
+        
+      self.user_input_mapper = UserInputMapper(interface_listener=self.joystick_listener, num_motion_modes=3, num_finger_modes=1)
 
       self.Init_Robot()
 

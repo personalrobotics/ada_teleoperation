@@ -15,23 +15,13 @@ from AdaTeleopHandler import *
 VIEWER_DEFAULT = 'InteractiveMarker'
 SIMULATE_DEFAULT = True
 
-def Initialize_Adapy():
+def Initialize_Adapy(args):
     """ Initializes robot and environment through adapy, using the specified environment path
 
     @param env_path path to OpenRAVE environment
     @return environment, robot
     """
 
-    parser = argparse.ArgumentParser('Ada Assistance Policy')
-    parser.add_argument('-s', '--sim', action='store_true', default=SIMULATE_DEFAULT,
-                        help='simulation mode')
-    parser.add_argument('-v', '--viewer', nargs='?', const=True, default=VIEWER_DEFAULT,
-                        help='attach a viewer of the specified type')
-    #parser.add_argument('--env-xml', type=str,
-                        #help='environment XML file; defaults to an empty environment')
-    parser.add_argument('--debug', action='store_true',
-                        help='enable debug logging')
-    args = parser.parse_args()
     #env_path = '/environments/tablewithobjects_assisttest.env.xml'
     adapy_args = {'sim':args.sim,
                   'attach_viewer':args.viewer,
@@ -66,10 +56,24 @@ def Reset_Robot(robot):
 
 
 if __name__ == "__main__":
+    #parser.add_argument('-num', '--mouse-num', help='mouse number given by X in /dev/input/mouseX', type=str)
+    parser = argparse.ArgumentParser(description="Direct Teleoperation for Ada")
+
+    parser.add_argument('-s', '--sim', action='store_true', default=SIMULATE_DEFAULT,
+                        help='simulation mode')
+    parser.add_argument('-v', '--viewer', nargs='?', const=True, default=VIEWER_DEFAULT,
+                        help='attach a viewer of the specified type')
+    #parser.add_argument('--env-xml', type=str,
+                        #help='environment XML file; defaults to an empty environment')
+    parser.add_argument('--debug', action='store_true',
+                        help='enable debug logging')
+    parser.add_argument('-input', '--input-interface-name', help='name of the input interface. Possible choices: ' + str(possible_teleop_interface_names), type=str)
+    args = parser.parse_args()
+
     rospy.init_node('ada_teleoperation', anonymous = True)
 
-    env,robot = Initialize_Adapy()
+    env,robot = Initialize_Adapy(args)
     Reset_Robot(robot)
-    ada_teleop = AdaTeleopHandler(env, robot)
+    ada_teleop = AdaTeleopHandler(env, robot, args.input_interface_name)
     ada_teleop.ExecuteDirectTeleop()
 
