@@ -68,7 +68,7 @@ class AdaTeleopHandler:
 
   def Init_Robot(self):
     if not self.sim:
-      self.SwitchToVelocityController()
+      self.robot.SwitchToTeleopController()
 
     #set the robot state we keep track of
     self.robot_state = RobotState(self.GetEndEffectorTransform(), self.hand.GetDOFValues(), num_modes=self.user_input_mapper.num_motion_modes + self.user_input_mapper.num_finger_modes)

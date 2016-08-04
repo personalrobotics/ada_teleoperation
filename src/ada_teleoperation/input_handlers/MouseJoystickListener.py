@@ -15,6 +15,15 @@ class MouseJoystickListener(UserInputListener):
 
 
   def message_to_data(self, message):
-    return UserInputData(np.array(message.axes), np.array(message.buttons))
+    return UserInputData(np.array(message.axes)*-1., np.array(message.buttons))
+
+  #rotates the translation inputs to the correct world frame, applies weighting
+  def translation_input_conversion(self, inputs, robot_state):
+    return inputs * translation_weightings
 
 
+  #puts the rotation input into the world frame, applies weighting
+  def rotation_input_conversion(self, inputs, robot_state):
+    inputs_rotated = [-inputs[1], -inputs[0], inputs[2]]
+    ee_rot = robot_state.ee_trans[0:3,0:3]
+    return np.dot(ee_rot, inputs_rotated * angular_weightings)

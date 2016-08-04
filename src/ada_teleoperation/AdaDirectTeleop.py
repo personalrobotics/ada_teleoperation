@@ -13,7 +13,7 @@ from AdaTeleopHandler import *
 
 
 VIEWER_DEFAULT = 'InteractiveMarker'
-SIMULATE_DEFAULT = True
+SIMULATE_DEFAULT = False
 
 def Initialize_Adapy(args):
     """ Initializes robot and environment through adapy, using the specified environment path
