@@ -50,9 +50,9 @@ def Reset_Robot(robot):
     with robot.GetEnv():
       robot.SetDOFValues(pos, inds)
       robot.arm.hand.SetDOFValues(np.ones(num_hand_dofs)*0.1)
-  else:
+  #else:
     #robot.arm.hand.OpenHand()
-    robot.arm.PlanToNamedConfiguration('home', execute=True)
+  #  robot.arm.PlanToNamedConfiguration('home', execute=True)
 
 
 def Teleop_Done(env, robot):
