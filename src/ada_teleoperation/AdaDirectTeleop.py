@@ -80,6 +80,6 @@ if __name__ == "__main__":
 
     env,robot = Initialize_Adapy(args)
     Reset_Robot(robot)
-    ada_teleop = AdaTeleopHandler(env, robot, args.input_interface_name, args.num_input_dofs, is_done_func=Teleop_Done)
+    ada_teleop = AdaTeleopHandler(env, robot, args.input_interface_name, args.num_input_dofs)#, is_done_func=Teleop_Done)
     ada_teleop.ExecuteDirectTeleop()
 
