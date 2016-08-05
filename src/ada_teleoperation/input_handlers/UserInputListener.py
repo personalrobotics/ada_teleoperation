@@ -33,7 +33,7 @@ class UserInputListener(object):
   def get_most_recent_cmd(self):
     while self.most_recent_message is None:
       print 'Error: No user input to return'
-      time.sleep(0)
+      time.sleep(0.02)
 
     with self.inputlock:
       data = self.message_to_data(self.most_recent_message)

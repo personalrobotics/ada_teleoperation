@@ -86,7 +86,8 @@ class AdaTeleopHandler:
 
   # NOTE: twist is stacked [cartesian angular]
   def execute_twist(self, twist):
-      jointVels, twist_opt = prpy.util.ComputeJointVelocityFromTwist(self.robot, twist)# objective=prpy.util.quadraticPlusJointLimitObjective)
+      #jointVels, twist_opt = prpy.util.ComputeJointVelocityFromTwist(self.robot, twist)# objective=prpy.util.quadraticPlusJointLimitObjective)
+      jointVels, twist_opt = prpy.util.ComputeJointVelocityFromTwist(self.robot, twist, objective=weightedQuadraticObjective)
       return self.execute_joint_velocities(jointVels)
 
 
@@ -136,3 +137,19 @@ class AdaTeleopHandler:
 
 def Is_Done_Func_Default(env, robot):
   return False
+
+def weightedQuadraticObjective(dq, J, dx, weights=np.array([5., 5., 5., 1., 1., 1.]), *args):
+    """
+    Quadratic objective function for SciPy's optimization that penalizes translation error more then rotation error
+    @param dq joint velocity
+    @param J Jacobian
+    @param dx desired twist
+    @return objective the objective function
+    @return gradient the analytical gradient of the objective
+    """
+    error = (np.dot(J, dq) - dx)
+    error *= weights
+    objective = 0.5 * np.dot(np.transpose(error), error)
+    gradient = np.dot(np.transpose(J), error)
+    return objective, gradient
+

@@ -43,7 +43,7 @@ class RobotState(object):
   def state_after_action(self, action, time):
     state_copy = copy.deepcopy(self)
     if not action.is_no_move():
-      state_copy.ee_trans = ApplyTwistToTransform(action.move, state_copy.ee_trans, time)
+      state_copy.ee_trans = ApplyTwistToTransform(action.twist, state_copy.ee_trans, time)
 
     if not action.is_no_mode_switch():
       state_copy.mode = action.switch_mode_to
