@@ -113,8 +113,19 @@ class AdaTeleopHandler:
   
     time_per_iter = 1./CONTROL_HZ
 
-    #from ada_assistance_policy.AssistancePolicyVisualizationTools import *
-    #vis = VisualizationHandler()
+#    from ada_assistance_policy.AssistancePolicyVisualizationTools import *
+#    vis = VisualizationHandler()
+#    from KinovaStudyHelpers import *
+#
+#    robot = self.robot
+#    ee_trans_home = self.GetEndEffectorTransform().copy()
+#
+#    curr_config = self.robot.arm.GetDOFValues()
+#    converted_config = ConvertArmConfigHandedness(robot, curr_config)
+#    if converted_config is not None:
+#      robot.arm.SetDOFValues(converted_config)
+#      print 'before: ' + str(curr_config)
+#      print 'after: ' + str(converted_config)
 
     while not self.is_done_func(self.env, self.robot):
       start_time = time.time()
@@ -124,10 +135,12 @@ class AdaTeleopHandler:
       
       user_input_raw = self.joystick_listener.get_most_recent_cmd()
       direct_teleop_action = self.user_input_mapper.input_to_action(user_input_raw, robot_state)
-
       self.ExecuteAction(direct_teleop_action)
-
-      #vis.draw_hand_poses([robot_state.ee_trans], marker_ns='ee_axis')
+      
+#      ee_trans_before = self.GetEndEffectorTransform().copy()
+#      config_before = robot.arm.GetDOFValues()
+#      converted_pose = ConvertEEPoseHandedness(self.robot.GetTransform(), robot_state.ee_trans)
+#      vis.draw_hand_poses([robot_state.ee_trans,converted_pose], marker_ns='ee_axis')
 
       end_time=time.time()
       
@@ -153,3 +166,16 @@ def weightedQuadraticObjective(dq, J, dx, weights=np.array([5., 5., 5., 1., 1., 
     gradient = np.dot(np.transpose(J), error)
     return objective, gradient
 
+#
+#def ang_error_quats(q1, q2):
+#    quat_between = openravepy.quatMultiply( openravepy.quatInverse(q1), q2)
+#    print quat_between
+#    w = min(quat_between[0], 1.-1e-10)
+#    w = max(w, -(1.-1e-10))
+#    return 2.*np.arccos(w)
+#
+#from prpy.util import *
+#def ang_error_mats(m1, m2):
+#    #return AngleBetweenRotations(m1, m2)
+#    return ang_error_quats(openravepy.quatFromRotationMatrix(m1), openravepy.quatFromRotationMatrix(m2))
+#
