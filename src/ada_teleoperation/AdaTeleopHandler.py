@@ -31,7 +31,7 @@ def Is_Done_Func_Button_Hold(env, robot, user_input):
 
 
 class AdaTeleopHandler:
-  def __init__(self, env, robot, teleop_interface, num_input_dofs):
+  def __init__(self, env, robot, teleop_interface, num_input_dofs, use_finger_mode=True):
 #      self.params = {'rand_start_radius':0.04,
 #             'noise_pwr': 0.3,  # magnitude of noise
 #             'vel_scale': 4.,   # scaling when sending velocity commands to robot
@@ -64,8 +64,12 @@ class AdaTeleopHandler:
         self.joystick_listener = HydraListener()
       else:
         raise Exception('Teleop interface not specified. Please specify one of: ' + str(possible_teleop_interface_names))
-        
-      self.user_input_mapper = UserInputMapper(interface_listener=self.joystick_listener, num_motion_modes=self.num_motion_modes, num_finger_modes=1)
+       
+      if use_finger_mode:
+          num_finger_modes = 1
+      else:
+          num_finger_modes = 0
+      self.user_input_mapper = UserInputMapper(interface_listener=self.joystick_listener, num_motion_modes=self.num_motion_modes, num_finger_modes=0)
 
       self.Init_Robot()
 

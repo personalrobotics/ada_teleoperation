@@ -18,8 +18,8 @@ class UserInputMapper(object):
 
   def input_to_action(self, user_input_data, robot_state):
     action_to_ret = Action()
-    #if the first button is now being pressed, switch modes
-    if user_input_data.button_changes[0] == 1:
+    #if the first button is was released, and we didn't activate hold, change modes
+    if user_input_data.button_changes[0] == -1 and user_input_data.buttons_held[0] != 1:
       action_to_ret.switch_mode_to = robot_state.next_mode()
       return action_to_ret
     
