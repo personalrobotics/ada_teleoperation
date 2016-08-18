@@ -21,8 +21,17 @@ hydra_interface_name = 'hydra'
 possible_teleop_interface_names = [mouse_interface_name, kinova_joy_interface_name, hydra_interface_name]
 
 
+
+def Is_Done_Func_Default(*args):
+  return False
+
+def Is_Done_Func_Button_Hold(env, robot, user_input):
+  return user_input.buttons_held[0]
+  #if user_input.
+
+
 class AdaTeleopHandler:
-  def __init__(self, env, robot, teleop_interface, num_input_dofs, is_done_func=None):
+  def __init__(self, env, robot, teleop_interface, num_input_dofs):
 #      self.params = {'rand_start_radius':0.04,
 #             'noise_pwr': 0.3,  # magnitude of noise
 #             'vel_scale': 4.,   # scaling when sending velocity commands to robot
@@ -37,11 +46,6 @@ class AdaTeleopHandler:
 
       num_finger_dofs = len(self.hand.GetIndices())
       Action.set_no_finger_vel(num_finger_dofs)
-
-      if is_done_func is None:
-        self.is_done_func = Is_Done_Func_Default
-      else:
-        self.is_done_func = is_done_func
 
       #number of different modes used for motion is related to how many dofs of input we have
       if num_input_dofs == 2:
@@ -108,7 +112,7 @@ class AdaTeleopHandler:
     self.hand.Servo(finger_velocities)
 
 
-  def ExecuteDirectTeleop(self):
+  def ExecuteDirectTeleop(self, is_done_func=Is_Done_Func_Default):
     robot_state = self.robot_state
   
     time_per_iter = 1./CONTROL_HZ
@@ -126,8 +130,8 @@ class AdaTeleopHandler:
 #      robot.arm.SetDOFValues(converted_config)
 #      print 'before: ' + str(curr_config)
 #      print 'after: ' + str(converted_config)
-
-    while not self.is_done_func(self.env, self.robot):
+    user_input_raw = self.joystick_listener.get_most_recent_cmd()
+    while not is_done_func(self.env, self.robot, user_input_raw):
       start_time = time.time()
       robot_state.ee_trans = self.GetEndEffectorTransform()
       robot_state.finger_dofs = self.manip.hand.GetDOFValues()
@@ -146,10 +150,6 @@ class AdaTeleopHandler:
       
       rospy.sleep( max(0., time_per_iter - (end_time-start_time)))
 
-
-
-def Is_Done_Func_Default(env, robot):
-  return False
 
 def weightedQuadraticObjective(dq, J, dx, *args):
     """
