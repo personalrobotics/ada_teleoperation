@@ -69,7 +69,7 @@ class AdaTeleopHandler:
           num_finger_modes = 1
       else:
           num_finger_modes = 0
-      self.user_input_mapper = UserInputMapper(interface_listener=self.joystick_listener, num_motion_modes=self.num_motion_modes, num_finger_modes=0)
+      self.user_input_mapper = UserInputMapper(interface_listener=self.joystick_listener, num_motion_modes=self.num_motion_modes, num_finger_modes=num_finger_modes)
 
       self.Init_Robot()
 
