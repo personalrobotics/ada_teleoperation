@@ -6,11 +6,13 @@ from input_handlers.UserInputListener import UserInputData
 from input_handlers import KinovaJoystickListener, HydraListener, MouseJoystickListener
 #from HydraListener import *
 from RobotState import *
+from DataRecordingUtils import *
 from UserInputMapper import UserInputMapper
 
 import openravepy
 import adapy
 import prpy
+ 
 
 CONTROL_HZ = 50.
 
@@ -56,6 +58,7 @@ class AdaTeleopHandler:
         raise Exception('Number of input dofs being used must be 2 or 3')
 
       #select which input device we will be using
+      self.teleop_interface = teleop_interface
       if teleop_interface == mouse_interface_name:
         self.joystick_listener = MouseJoystickListener()
       elif teleop_interface == kinova_joy_interface_name:
@@ -116,24 +119,15 @@ class AdaTeleopHandler:
     self.hand.Servo(finger_velocities)
 
 
-  def ExecuteDirectTeleop(self, is_done_func=Is_Done_Func_Default):
+  def ExecuteDirectTeleop(self, is_done_func=Is_Done_Func_Default, traj_data_recording=None):
     robot_state = self.robot_state
   
     time_per_iter = 1./CONTROL_HZ
 
-#    from ada_assistance_policy.AssistancePolicyVisualizationTools import *
-#    vis = VisualizationHandler()
-#    from KinovaStudyHelpers import *
-#
-#    robot = self.robot
-#    ee_trans_home = self.GetEndEffectorTransform().copy()
-#
-#    curr_config = self.robot.arm.GetDOFValues()
-#    converted_config = ConvertArmConfigHandedness(robot, curr_config)
-#    if converted_config is not None:
-#      robot.arm.SetDOFValues(converted_config)
-#      print 'before: ' + str(curr_config)
-#      print 'after: ' + str(converted_config)
+    if traj_data_recording:
+      traj_data_recording.set_init_info(start_state=robot_state, input_interface_name=self.teleop_interface, assist_type='None')
+
+
     user_input_raw = self.joystick_listener.get_most_recent_cmd()
     while not is_done_func(self.env, self.robot, user_input_raw):
       start_time = time.time()
@@ -144,6 +138,11 @@ class AdaTeleopHandler:
       user_input_raw = self.joystick_listener.get_most_recent_cmd()
       direct_teleop_action = self.user_input_mapper.input_to_action(user_input_raw, robot_state)
       self.ExecuteAction(direct_teleop_action)
+
+
+      if traj_data_recording:
+        robot_dof_values = self.robot.GetDOFValues()
+        traj_data_recording.add_datapoint(robot_state=robot_state, robot_dof_values=robot_dof_values, user_input_all=user_input_raw, direct_teleop_action=direct_teleop_action, executed_action=direct_teleop_action)
       
 #      ee_trans_before = self.GetEndEffectorTransform().copy()
 #      config_before = robot.arm.GetDOFValues()
@@ -153,6 +152,10 @@ class AdaTeleopHandler:
       end_time=time.time()
       
       rospy.sleep( max(0., time_per_iter - (end_time-start_time)))
+
+    if traj_data_recording:
+      traj_data_recording.tofile()
+
 
 
 def weightedQuadraticObjective(dq, J, dx, *args):
@@ -171,17 +174,3 @@ def weightedQuadraticObjective(dq, J, dx, *args):
     objective = 0.5 * np.dot(np.transpose(error), error)
     gradient = np.dot(np.transpose(J), error)
     return objective, gradient
-
-#
-#def ang_error_quats(q1, q2):
-#    quat_between = openravepy.quatMultiply( openravepy.quatInverse(q1), q2)
-#    print quat_between
-#    w = min(quat_between[0], 1.-1e-10)
-#    w = max(w, -(1.-1e-10))
-#    return 2.*np.arccos(w)
-#
-#from prpy.util import *
-#def ang_error_mats(m1, m2):
-#    #return AngleBetweenRotations(m1, m2)
-#    return ang_error_quats(openravepy.quatFromRotationMatrix(m1), openravepy.quatFromRotationMatrix(m2))
-#
