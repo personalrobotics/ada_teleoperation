@@ -4,13 +4,15 @@ import cPickle as pickle
 import os.path
 import glob
 import time
+import subprocess
+import signal
+import psutil
 
 import logging
 logging.basicConfig()
 logger = logging.getLogger('ada_teleoperation')
 
-import rospy
-import rospkg
+import rospy, rospkg
 
 #from RobotState import *
 #from Goal import Goal
@@ -67,9 +69,9 @@ class TrajectoryData(object):
 
 
 def load_all_trajectorydata(file_directory=None, filename_base=None):
-  if file_directory is None:
+  if file_directory is none:
     file_directory = file_directory_default
-  if filename_base is None:
+  if filename_base is none:
     filename_base = filename_base_default
   dir_and_filename_base = os.path.join(file_directory, filename_base)
 
@@ -97,6 +99,33 @@ def get_next_filename(file_directory, filename_base, file_type='.pckl'):
 def add_time_to_dict(dict):
   dict['timestamp'] = time.time()
   return dict
+
+
+def start_rosbag(topics, file_directory=None, filename_base=None):
+  if file_directory is None:
+    file_directory = file_directory_default
+  if filename_base is None:
+    filename_base = filename_base_default
+  filename = get_next_filename(file_directory, filename_base, '.bag')
+  
+  topics_str = str(topics)[1:-2]
+  topics_str = topics_str.replace("'", "")
+  topics_str = topics_str.replace(",", "")
+
+  command = "rosbag record -O " + filename + ' ' + topics_str
+  
+  rosbag_process = subprocess.Popen(command, stdin=subprocess.PIPE, shell=True, cwd=file_directory)
+  return rosbag_process
+
+def stop_rosbag(rosbag_process):
+  terminate_process_and_children(rosbag_process)
+
+
+def terminate_process_and_children(p):
+  children = psutil.Process(p.pid).get_children(recursive=True)
+  for child_p in children:
+    child_p.send_signal(signal.SIGINT)
+  p.send_signal(subprocess.signal.SIGINT)
 
 #maintain the data for each time step
 #class TrajectoryData_PerTimeStep(object):

@@ -98,8 +98,8 @@ class AdaTeleopHandler:
 
   # NOTE: twist is stacked [cartesian angular]
   def execute_twist(self, twist):
-      #jointVels, twist_opt = prpy.util.ComputeJointVelocityFromTwist(self.robot, twist)# objective=prpy.util.quadraticPlusJointLimitObjective)
-      jointVels, twist_opt = prpy.util.ComputeJointVelocityFromTwist(self.robot, twist, objective=weightedQuadraticObjective)
+      #jointVels, twist_opt = prpy.util.ComputeJointVelocityFromTwist(self.robot, twist, objective=weightedQuadraticObjective)
+      jointVels, twist_opt = prpy.util.ComputeJointVelocityFromTwist(self.robot, twist)
       return self.execute_joint_velocities(jointVels)
 
 
@@ -155,6 +155,9 @@ class AdaTeleopHandler:
       
       rospy.sleep( max(0., time_per_iter - (end_time-start_time)))
 
+    #execute zero velocity to stop movement
+    self.execute_joint_velocities(np.zeros(len(self.manip.GetDOFValues())))
+
     if traj_data_recording:
       traj_data_recording.tofile()
 
@@ -172,7 +175,7 @@ def weightedQuadraticObjective(dq, J, dx, *args):
     error = (np.dot(J, dq) - dx)
     #for some reason, passing weights as an argument caused trouble, so now just hard coded
     #error *= error_weights
-    error *= np.array([5., 5., 5., 1., 1., 1.])
+    error *= np.array([3., 3., 3., 1., 1., 1.])
     objective = 0.5 * np.dot(np.transpose(error), error)
     gradient = np.dot(np.transpose(J), error)
     return objective, gradient
