@@ -21,9 +21,20 @@ filename_base_default = 'trajdata_'
 next_fileind_to_check = 0
 
 class TrajectoryData(object):
-  def __init__(self, init_info=None):
+  def __init__(self, init_info=None, file_directory=None, filename_base=None):
     self.init_info = init_info
     self.end_info = None
+
+    if file_directory:
+      self.file_directory = file_directory
+    else:
+      self.file_directory = file_directory_default
+
+    if filename_base:
+      self.filename_base = filename_base
+    else:
+      self.filename_base = filename_base_default
+
 
     self.data_per_time_step = []
 
@@ -41,9 +52,9 @@ class TrajectoryData(object):
 
   def tofile(self, file_directory=None, filename_base=None):
     if file_directory is None:
-      file_directory = file_directory_default
+      file_directory = self.file_directory
     if filename_base is None:
-      filename_base = filename_base_default
+      filename_base = self.filename_base
 
     #first make sure directory exists
     if not os.path.exists(file_directory):
@@ -70,11 +81,11 @@ def load_trajectorydata_from_file(filename):
   return pickle.load(open(filename, 'r'))
 
 
-def get_next_filename(file_directory, filename_base):
+def get_next_filename(file_directory, filename_base, file_type='.pckl'):
   dir_and_filename_base = os.path.join(file_directory, filename_base)
   global next_fileind_to_check
   while True:
-    filename = dir_and_filename_base + str(next_fileind_to_check).zfill(3) + '.pckl'
+    filename = dir_and_filename_base + str(next_fileind_to_check).zfill(3) + file_type
     if not os.path.isfile(filename):
       break
     next_fileind_to_check += 1

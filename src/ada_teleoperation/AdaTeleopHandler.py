@@ -1,6 +1,7 @@
 import rospy
 import numpy as np
 import time
+import copy
 
 from input_handlers.UserInputListener import UserInputData
 from input_handlers import KinovaJoystickListener, HydraListener, MouseJoystickListener
@@ -125,7 +126,7 @@ class AdaTeleopHandler:
     time_per_iter = 1./CONTROL_HZ
 
     if traj_data_recording:
-      traj_data_recording.set_init_info(start_state=robot_state, input_interface_name=self.teleop_interface, assist_type='None')
+      traj_data_recording.set_init_info(start_state=copy.deepcopy(robot_state), input_interface_name=self.teleop_interface, assist_type='None')
 
 
     user_input_raw = self.joystick_listener.get_most_recent_cmd()
@@ -142,7 +143,8 @@ class AdaTeleopHandler:
 
       if traj_data_recording:
         robot_dof_values = self.robot.GetDOFValues()
-        traj_data_recording.add_datapoint(robot_state=robot_state, robot_dof_values=robot_dof_values, user_input_all=user_input_raw, direct_teleop_action=direct_teleop_action, executed_action=direct_teleop_action)
+
+        traj_data_recording.add_datapoint(robot_state=copy.deepcopy(robot_state), robot_dof_values=copy.copy(robot_dof_values), user_input_all=copy.deepcopy(user_input_raw), direct_teleop_action=copy.deepcopy(direct_teleop_action), executed_action=copy.deepcopy(direct_teleop_action))
       
 #      ee_trans_before = self.GetEndEffectorTransform().copy()
 #      config_before = robot.arm.GetDOFValues()
