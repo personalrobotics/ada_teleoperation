@@ -23,19 +23,11 @@ filename_base_default = 'trajdata_'
 next_fileind_to_check = 0
 
 class TrajectoryData(object):
-  def __init__(self, init_info=None, file_directory=None, filename_base=None):
+  def __init__(self, filename, init_info=None):
     self.init_info = init_info
     self.end_info = None
 
-    if file_directory:
-      self.file_directory = file_directory
-    else:
-      self.file_directory = file_directory_default
-
-    if filename_base:
-      self.filename_base = filename_base
-    else:
-      self.filename_base = filename_base_default
+    self.filename = filename
 
 
     self.data_per_time_step = []
@@ -52,20 +44,51 @@ class TrajectoryData(object):
     #self.data_per_time_step.append(TrajectoryData_PerTimeStep(*args, **kwargs))
     self.data_per_time_step.append((args, add_time_to_dict(kwargs)))
 
-  def tofile(self, file_directory=None, filename_base=None):
-    if file_directory is None:
-      file_directory = self.file_directory
-    if filename_base is None:
-      filename_base = self.filename_base
-
+  def tofile(self):
     #first make sure directory exists
+    file_directory = os.path.dirname(self.filename)
     if not os.path.exists(file_directory):
       os.makedirs(file_directory)
       
-    filename = get_next_filename(file_directory, filename_base)
-    with open(filename, 'w') as f:
+    #filename = get_next_filename(file_directory, filename_base)
+    with open(self.filename, 'w') as f:
       pickle.dump(self, f)
 
+
+#gets names for traj data and rosbag files
+def get_next_filename_pair(file_directory=None, filename_base=None):
+  if file_directory is None:
+    file_directory = file_directory_default
+  if filename_base is None:
+    filename_base = filename_base_default
+
+  file_ind = get_next_available_file_ind(file_directory, filename_base)
+  filename_traj = get_filename(file_directory, filename_base, file_ind, file_type='.pckl')
+  filename_bag = get_filename(file_directory, filename_base, file_ind, file_type='.bag')
+
+  return filename_traj, filename_bag
+
+
+def get_next_available_file_ind(file_directory=None, filename_base=None, file_type='.*'):
+  if file_directory is None:
+    file_directory = file_directory_default
+  if filename_base is None:
+    filename_base = filename_base_default
+
+  #dir_and_filename_base = os.path.join(file_directory, filename_base)
+  global next_fileind_to_check
+  while True:
+    filename = get_filename(file_directory, filename_base, next_fileind_to_check, file_type)
+    #if not os.path.isfile(filename):
+    if len(glob.glob(filename)) == 0:
+      break
+    next_fileind_to_check += 1
+
+  return next_fileind_to_check
+
+
+def get_filename(file_directory, filename_base, file_ind, file_type):
+  return os.path.join(file_directory, filename_base) + str(next_fileind_to_check).zfill(3) + file_type
 
 
 def load_all_trajectorydata(file_directory=None, filename_base=None):
@@ -82,17 +105,17 @@ def load_all_trajectorydata(file_directory=None, filename_base=None):
 def load_trajectorydata_from_file(filename):
   return pickle.load(open(filename, 'r'))
 
-
-def get_next_filename(file_directory, filename_base, file_type='.pckl'):
-  dir_and_filename_base = os.path.join(file_directory, filename_base)
-  global next_fileind_to_check
-  while True:
-    filename = dir_and_filename_base + str(next_fileind_to_check).zfill(3) + file_type
-    if not os.path.isfile(filename):
-      break
-    next_fileind_to_check += 1
-
-  return filename
+#
+#def get_next_filename(file_directory, filename_base, file_type='.pckl'):
+#  dir_and_filename_base = os.path.join(file_directory, filename_base)
+#  global next_fileind_to_check
+#  while True:
+#    filename = dir_and_filename_base + str(next_fileind_to_check).zfill(3) + file_type
+#    if not os.path.isfile(filename):
+#      break
+#    next_fileind_to_check += 1
+#
+#  return filename
 
 
 
@@ -101,12 +124,12 @@ def add_time_to_dict(dict):
   return dict
 
 
-def start_rosbag(topics, file_directory=None, filename_base=None):
-  if file_directory is None:
-    file_directory = file_directory_default
-  if filename_base is None:
-    filename_base = filename_base_default
-  filename = get_next_filename(file_directory, filename_base, '.bag')
+def start_rosbag(topics, filename):
+#  if file_directory is None:
+#    file_directory = file_directory_default
+#  if filename_base is None:
+#    filename_base = filename_base_default
+#  filename = get_next_filename(file_directory, filename_base, '.bag')
   
   topics_str = str(topics)[1:-2]
   topics_str = topics_str.replace("'", "")
@@ -114,6 +137,7 @@ def start_rosbag(topics, file_directory=None, filename_base=None):
 
   command = "rosbag record -O " + filename + ' ' + topics_str
   
+  file_directory = os.path.dirname(filename)
   rosbag_process = subprocess.Popen(command, stdin=subprocess.PIPE, shell=True, cwd=file_directory)
   return rosbag_process
 
