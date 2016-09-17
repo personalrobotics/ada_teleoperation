@@ -19,8 +19,10 @@ import rospy, rospkg
 
 file_directory_default = rospkg.RosPack().get_path('ada_teleoperation') + '/trajectory_data'
 filename_base_default = 'trajdata_'
+user_folder_base_default = 'user_'
 
 next_fileind_to_check = 0
+next_userind_to_check = 0
 
 class TrajectoryData(object):
   def __init__(self, filename, init_info=None):
@@ -79,6 +81,7 @@ def get_next_available_file_ind(file_directory=None, filename_base=None, file_ty
   global next_fileind_to_check
   while True:
     filename = get_filename(file_directory, filename_base, next_fileind_to_check, file_type)
+    print filename
     #if not os.path.isfile(filename):
     if len(glob.glob(filename)) == 0:
       break
@@ -86,15 +89,33 @@ def get_next_available_file_ind(file_directory=None, filename_base=None, file_ty
 
   return next_fileind_to_check
 
+def get_next_available_user_ind(file_directory=None, user_folder_base=None, make_dir=True):
+  if file_directory is None:
+    file_directory = file_directory_default
+  if user_folder_base is None:
+    user_folder_base = user_folder_base_default
+
+  global next_userind_to_check
+  while True:
+    foldername = get_filename(file_directory, user_folder_base, next_userind_to_check, file_type="")
+    if not os.path.isdir(foldername):
+      break
+    next_userind_to_check += 1
+
+  if make_dir and not os.path.exists(foldername):
+      os.makedirs(foldername)
+
+  return next_userind_to_check, foldername
+
 
 def get_filename(file_directory, filename_base, file_ind, file_type):
-  return os.path.join(file_directory, filename_base) + str(next_fileind_to_check).zfill(3) + file_type
+  return os.path.join(file_directory, filename_base) + str(file_ind).zfill(3) + file_type
 
 
 def load_all_trajectorydata(file_directory=None, filename_base=None):
-  if file_directory is none:
+  if file_directory is None:
     file_directory = file_directory_default
-  if filename_base is none:
+  if filename_base is None:
     filename_base = filename_base_default
   dir_and_filename_base = os.path.join(file_directory, filename_base)
 
