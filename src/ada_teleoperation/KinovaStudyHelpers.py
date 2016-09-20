@@ -50,11 +50,11 @@ def AddConstraintBoxes(env, robot, handedness='right', name_base="constraint_box
     #add a box behind the robot
     box_behind = openravepy.RaveCreateKinBody(env,'')
     box_behind.SetName(name_base + 'behind')
-    box_behind.InitFromBoxes(np.array([[0.,0.,0., 0.4, 0.1, 1.0]]), visible)
+    box_behind.InitFromBoxes(np.array([[0.,0.,0., 0.4, 0.1, 1.0]]), False)
     env.Add(box_behind)
     T = np.eye(4)
     T[0:3,3] = robot.GetTransform()[0:3,3]
-    T[1,3] = 0.54
+    T[1,3] = 0.57
     if handedness == 'right':
         T[0,3] += 0.25
     else:
