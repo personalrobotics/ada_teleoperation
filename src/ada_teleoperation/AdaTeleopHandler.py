@@ -13,6 +13,8 @@ from UserInputMapper import UserInputMapper
 import openravepy
 import adapy
 import prpy
+
+from prpy.util import GeodesicTwist
  
 
 CONTROL_HZ = 50.
@@ -91,16 +93,23 @@ class AdaTeleopHandler:
 
   def ExecuteAction(self, action):
     self.robot_state.mode = self.robot_state.mode_after_action(action)
-    #self.robot_state = self.robot_state.state_after_action(action)
+
     self.execute_twist(action.twist)
+    #state_after = self.robot_state.state_after_action(action, 1.0)
+    #self.execute_twist_to_transform(state_after.ee_trans)
     self.execute_finger_velocities(action.finger_vel)
 
 
+  def execute_twist_to_transform(self, target_trans):
+    twist = GeodesicTwist(self.manip.GetEndEffectorTransform(), target_trans)
+    return self.execute_twist(twist)
+  
+
   # NOTE: twist is stacked [cartesian angular]
   def execute_twist(self, twist):
-      #jointVels, twist_opt = prpy.util.ComputeJointVelocityFromTwist(self.robot, twist, objective=weightedQuadraticObjective)
-      jointVels, twist_opt = prpy.util.ComputeJointVelocityFromTwist(self.robot, twist)
-      return self.execute_joint_velocities(jointVels)
+    #jointVels, twist_opt = prpy.util.ComputeJointVelocityFromTwist(self.robot, twist, objective=weightedQuadraticObjective)
+    jointVels, twist_opt = prpy.util.ComputeJointVelocityFromTwist(self.robot, twist)
+    return self.execute_joint_velocities(jointVels)
 
 
   def execute_joint_velocities(self, joint_velocities):
