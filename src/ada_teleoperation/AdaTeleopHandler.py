@@ -14,18 +14,13 @@ import openravepy
 import adapy
 import prpy
 
-from prpy.util import GeodesicTwist
- 
-
 CONTROL_HZ = 50.
 
-mouse_interface_name = 'mouse'
-kinova_joy_interface_name = 'kinova'
-hydra_interface_name = 'hydra'
-
-possible_teleop_interface_names = [mouse_interface_name, kinova_joy_interface_name, hydra_interface_name]
-
-
+listener_constructors = {
+  "mouse": MouseJoystickListener,
+  "kinova": KinovaJoystickListener,
+  "hydra": HydraListener
+}
 
 def Is_Done_Func_Default(*args):
   return False
@@ -60,23 +55,24 @@ class AdaTeleopHandler:
       else:
         raise Exception('Number of input dofs being used must be 2 or 3')
 
-      #select which input device we will be using
-      self.teleop_interface = teleop_interface
-      if teleop_interface == mouse_interface_name:
-        self.joystick_listener = MouseJoystickListener()
-      elif teleop_interface == kinova_joy_interface_name:
-        self.joystick_listener = KinovaJoystickListener()
-      elif teleop_interface == hydra_interface_name:
-        self.joystick_listener = HydraListener()
-      else:
-        raise Exception('Teleop interface not specified. Please specify one of: ' + str(possible_teleop_interface_names))
-       
       if use_finger_mode:
           num_finger_modes = 1
       else:
           num_finger_modes = 0
-      self.user_input_mapper = UserInputMapper(interface_listener=self.joystick_listener, num_motion_modes=self.num_motion_modes, num_finger_modes=num_finger_modes)
 
+      # select which input device we will be using
+      # if given a string name, will try to use a listener with that name, otherwise
+      # assumes teleop_interface is an action source that can used directly
+      if type(teleop_interface) == str:
+        if teleop_interface in listener_constructors:
+          listener = listener_constructors[teleop_interface]()
+          input_mapper = UserInputMapper(interface_listener=listener, num_motion_modes=self.num_motion_modes, num_finger_modes=num_finger_modes)
+          self.action_source = MappedActionSource(listener, input_mapper, teleop_interface)
+      elif teleop_interface is not None:
+        self.action_source = teleop_interface
+      else:
+        raise Exception('Teleop interface not specified. Please specify one of: ' + str(list(listener_constructors.keys())))
+       
       self.Init_Robot()
 
 
@@ -98,11 +94,6 @@ class AdaTeleopHandler:
     #state_after = self.robot_state.state_after_action(action, 1.0)
     #self.execute_twist_to_transform(state_after.ee_trans)
     self.execute_finger_velocities(action.finger_vel)
-
-
-  def execute_twist_to_transform(self, target_trans):
-    twist = GeodesicTwist(self.manip.GetEndEffectorTransform(), target_trans)
-    return self.execute_twist(twist)
   
 
   # NOTE: twist is stacked [cartesian angular]
@@ -137,18 +128,14 @@ class AdaTeleopHandler:
     if traj_data_recording:
       traj_data_recording.set_init_info(start_state=copy.deepcopy(robot_state), input_interface_name=self.teleop_interface, assist_type='None')
 
-
-    user_input_raw = self.joystick_listener.get_most_recent_cmd()
     while not is_done_func(self.env, self.robot, user_input_raw):
       start_time = time.time()
       robot_state.ee_trans = self.GetEndEffectorTransform()
       robot_state.finger_dofs = self.manip.hand.GetDOFValues()
       #ee_trans = robot_state.ee_trans
-      
-      user_input_raw = self.joystick_listener.get_most_recent_cmd()
-      direct_teleop_action = self.user_input_mapper.input_to_action(user_input_raw, robot_state)
-      self.ExecuteAction(direct_teleop_action)
 
+      direct_teleop_action = self.action_source.get_action(self.robot, robot_state)
+      self.ExecuteAction(direct_teleop_action)
 
       if traj_data_recording:
         robot_dof_values = self.robot.GetDOFValues()

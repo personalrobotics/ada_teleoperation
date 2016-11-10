@@ -5,6 +5,7 @@
 import copy
 import numpy as np
 import rospy
+from prpy.util import GeodesicTwist
 
 from Utils import *
 
@@ -87,6 +88,9 @@ class Action(object):
 
   def is_no_finger_move(self):
     return np.linalg.norm(self.finger_vel) < 1e-10
+
+  def twist_from_transform(self, manip, target_transform):
+    self.twist = GeodesicTwist(manip.GetEndEffectorTransform(), target_transform)
   
 
   # return the parts of this actions move that can be
@@ -105,3 +109,14 @@ class Action(object):
   @staticmethod
   def set_no_finger_vel(num_finger_dofs):
     Action.no_finger_vel = np.zeros(num_finger_dofs)
+
+# An action source that grabs an input from its listener and runs it through its mapper
+class MappedActionSource(object):
+  def __init__(self, listener, mapper, source_name = "MappedActionSource"):
+    self.listener = listener
+    self.mapper = mapper
+    self.source_name = source_name
+
+  def get_action(self, robot, robot_state):
+    input = self.listener.get_most_recent_cmd()
+    return self.mapper.input_to_action(input, robot_state)
