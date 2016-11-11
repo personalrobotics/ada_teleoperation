@@ -10,7 +10,7 @@ from RobotState import *
 from DataRecordingUtils import *
 from UserInputMapper import UserInputMapper
 
-from testsources import MoveUpTestSource, SineTestSource
+from testsources import MoveUpTestSource, SineTestSource, SquareTestSource
 
 import openravepy
 import adapy
@@ -26,7 +26,8 @@ listener_constructors = {
 
 named_action_sources = {
   "moveuptest": MoveUpTestSource,
-  "sinetest": SineTestSource
+  "sinetest": SineTestSource,
+  "squaretest": SquareTestSource
 }
 
 def Is_Done_Func_Default(*args):
