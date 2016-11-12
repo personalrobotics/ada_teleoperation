@@ -100,9 +100,9 @@ class AdaTeleopHandler:
     self.execute_finger_velocities(action.finger_vel)
 
 
-  def execute_twist_to_transform(self, target_trans):
+  def execute_twist_to_transform(self, target_trans, magnitude=1.):
     twist = GeodesicTwist(self.manip.GetEndEffectorTransform(), target_trans)
-    return self.execute_twist(twist)
+    return self.execute_twist(magnitude*twist)
   
 
   # NOTE: twist is stacked [cartesian angular]
