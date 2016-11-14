@@ -10,6 +10,8 @@ from RobotState import *
 from DataRecordingUtils import *
 from UserInputMapper import UserInputMapper
 
+from testsources import MoveUpTestSource, SineTestSource, SquareTestSource
+
 import openravepy
 import adapy
 import prpy
@@ -20,6 +22,12 @@ listener_constructors = {
   "mouse": MouseJoystickListener,
   "kinova": KinovaJoystickListener,
   "hydra": HydraListener
+}
+
+named_action_sources = {
+  "moveuptest": MoveUpTestSource,
+  "sinetest": SineTestSource,
+  "squaretest": SquareTestSource
 }
 
 def Is_Done_Func_Default(*args):
@@ -59,6 +67,7 @@ class AdaTeleopHandler:
           num_finger_modes = 1
       else:
           num_finger_modes = 0
+      self.num_finger_modes = num_finger_modes
 
       # select which input device we will be using
       # if given a string name, will try to use a listener with that name, otherwise
@@ -68,6 +77,8 @@ class AdaTeleopHandler:
           listener = listener_constructors[teleop_interface]()
           input_mapper = UserInputMapper(interface_listener=listener, num_motion_modes=self.num_motion_modes, num_finger_modes=num_finger_modes)
           self.action_source = MappedActionSource(listener, input_mapper, teleop_interface)
+        elif teleop_interface in named_action_sources:
+          self.action_source = named_action_sources[teleop_interface]()
       elif teleop_interface is not None:
         self.action_source = teleop_interface
       else:
@@ -81,7 +92,7 @@ class AdaTeleopHandler:
       self.robot.SwitchToTeleopController()
 
     #set the robot state we keep track of
-    self.robot_state = RobotState(self.GetEndEffectorTransform(), self.hand.GetDOFValues(), num_modes=self.user_input_mapper.num_motion_modes + self.user_input_mapper.num_finger_modes)
+    self.robot_state = RobotState(self.GetEndEffectorTransform(), self.hand.GetDOFValues(), num_modes=self.num_motion_modes + self.num_finger_modes)
 
   def GetEndEffectorTransform(self):
     return self.manip.GetEndEffectorTransform()
@@ -128,7 +139,7 @@ class AdaTeleopHandler:
     if traj_data_recording:
       traj_data_recording.set_init_info(start_state=copy.deepcopy(robot_state), input_interface_name=self.teleop_interface, assist_type='None')
 
-    while not is_done_func(self.env, self.robot, user_input_raw):
+    while not is_done_func(self.env, self.robot, self.action_source):
       start_time = time.time()
       robot_state.ee_trans = self.GetEndEffectorTransform()
       robot_state.finger_dofs = self.manip.hand.GetDOFValues()
@@ -140,7 +151,8 @@ class AdaTeleopHandler:
       if traj_data_recording:
         robot_dof_values = self.robot.GetDOFValues()
 
-        traj_data_recording.add_datapoint(robot_state=copy.deepcopy(robot_state), robot_dof_values=copy.copy(robot_dof_values), user_input_all=copy.deepcopy(user_input_raw), direct_teleop_action=copy.deepcopy(direct_teleop_action), executed_action=copy.deepcopy(direct_teleop_action))
+        # TODO: refactor this
+        #traj_data_recording.add_datapoint(robot_state=copy.deepcopy(robot_state), robot_dof_values=copy.copy(robot_dof_values), user_input_all=copy.deepcopy(user_input_raw), direct_teleop_action=copy.deepcopy(direct_teleop_action), executed_action=copy.deepcopy(direct_teleop_action))
       
 #      ee_trans_before = self.GetEndEffectorTransform().copy()
 #      config_before = robot.arm.GetDOFValues()

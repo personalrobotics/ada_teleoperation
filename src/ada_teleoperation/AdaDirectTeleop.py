@@ -67,7 +67,7 @@ if __name__ == "__main__":
                         #help='environment XML file; defaults to an empty environment')
     parser.add_argument('--debug', action='store_true',
                         help='enable debug logging')
-    parser.add_argument('-input', '--input-interface-name', help='name of the input interface. Possible choices: ' + str(possible_teleop_interface_names), type=str)
+    parser.add_argument('-input', '--input-interface-name', help='name of the input interface. Possible choices: [see source]', type=str)
     parser.add_argument('-joy_dofs', '--num-input-dofs', help='number of dofs of input, either 2 or 3', type=int, default=2)
     args = parser.parse_args()
 
