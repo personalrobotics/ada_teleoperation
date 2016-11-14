@@ -94,7 +94,7 @@ class AdaTeleopHandler:
     #state_after = self.robot_state.state_after_action(action, 1.0)
     #self.execute_twist_to_transform(state_after.ee_trans)
     self.execute_finger_velocities(action.finger_vel)
-  
+
 
   # NOTE: twist is stacked [cartesian angular]
   def execute_twist(self, twist):
