@@ -12,7 +12,7 @@ class MoveUpTestSource:
         if self.target is None:
             self.target = robot_state.ee_trans.copy()
             self.target[0,3] += self.move_amount
-        ret.twist_from_transform(robot.arm, self.target)
+        ret.twist_from_transform(robot_state, self.target)
         return ret
 
 class SineTestSource:
@@ -30,7 +30,7 @@ class SineTestSource:
             self.target = robot_state.ee_trans.copy()
             self.z0 = self.target[0,3]
         self.target[0,3] = self.z0 + math.sin(self.t*self.frequency)*self.move_amount
-        ret.twist_from_transform(robot.arm, self.target)
+        ret.twist_from_transform(robot_state, self.target)
         return ret
 
 class SquareTestSource:
@@ -52,5 +52,5 @@ class SquareTestSource:
             self.target = robot_state.ee_trans.copy()
             self.z0 = self.target[2,3]
         self.target[2,3] = self.z0 + self.sign*self.move_amount
-        ret.twist_from_transform(robot.arm, self.target)
+        ret.twist_from_transform(robot_state, self.target)
         return ret

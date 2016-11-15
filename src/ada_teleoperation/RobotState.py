@@ -89,8 +89,8 @@ class Action(object):
   def is_no_finger_move(self):
     return np.linalg.norm(self.finger_vel) < 1e-10
 
-  def twist_from_transform(self, manip, target_transform, magnitude=1.0):
-    self.twist = magnitude*GeodesicTwist(manip.GetEndEffectorTransform(), target_transform)
+  def twist_from_transform(self, robot_state, target_transform, magnitude=1.0):
+    self.twist = magnitude*GeodesicTwist(robot_state.ee_trans, target_transform)
   
 
   # return the parts of this actions move that can be
