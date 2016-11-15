@@ -11,6 +11,7 @@ from DataRecordingUtils import *
 from UserInputMapper import UserInputMapper
 
 from testsources import MoveUpTestSource, SineTestSource, SquareTestSource
+from rosjsonsource import ROSJSONSource
 
 import openravepy
 import adapy
@@ -27,7 +28,8 @@ listener_constructors = {
 named_action_sources = {
   "moveuptest": MoveUpTestSource,
   "sinetest": SineTestSource,
-  "squaretest": SquareTestSource
+  "squaretest": SquareTestSource,
+  "vr": ROSJSONSource
 }
 
 def Is_Done_Func_Default(*args):
