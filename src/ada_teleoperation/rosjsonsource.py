@@ -8,11 +8,14 @@ from threading import Lock # not sure if needed?
 import time
 
 MAX_GRIP_VEL = 1.35
-MIN_STATE_DT = 0.2
+MIN_STATE_DT = 0.05
 
 def serialize_robot_positions(robot):
   links = robot.GetLinks()
-  return {l.GetName(): l.GetTransformPose().tolist() for l in links}
+  ret = {l.GetName(): l.GetTransformPose().tolist() for l in links}
+  # hack right now
+  ret["END_EFFECTOR"] = ret["mico_end_effector"]
+  return ret
 
 class ROSJSONSource:
   def __init__(self, in_topic_name = "vr_teleop", out_topic_name = "vr_robotstate"):
@@ -56,8 +59,8 @@ class ROSJSONSource:
     speed = np.clip(data.get('speed', 1.0), 0.0, 2.0)
     fingervel = MAX_GRIP_VEL * np.clip(data.get('grip_vel', 0.0), -1.0, 1.0)
 
-    if data.get('enabled', False):
-      target = np.array(data.pose).reshape((4,4)).transpose()
+    if data.get('enabled', 0) > 0:
+      target = np.array(data['matrix']).reshape((4,4)).transpose()
       ret.twist_from_transform(robot_state, target, speed)
       ret.finger_vel[:] = fingervel
 
